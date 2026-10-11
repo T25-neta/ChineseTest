@@ -209,19 +209,22 @@ const PA=[
 ];
 let RM='cz',CZ=null,PS=null;
 function vrd(){$('#v').innerHTML=`<div class="row"><button class="${RM=='cz'?'on':''}" onclick="RM='cz';vrd()">เติมคำในประโยค</button><button class="${RM=='ps'?'on':''}" onclick="RM='ps';vrd()">บทอ่านสั้น</button></div><div id="rb"></div>`;RM=='cz'?vcz():vps()}
+function czp(){return S.czm?pool():pool().filter(w=>w.l===S.lv)}
 function vcz(){
- if(!CZ||CZ.w.l>S.lv){const c=pool().filter(w=>w.ex&&w.ex.length>=4&&w.ex.includes(w.h));if(c.length<4){$('#rb').innerHTML='<div class="card">ยังไม่มีข้อมูลพอ</div>';return}
+ if(!CZ||CZ.w.l>S.lv||CZ.m!==S.czm||(!S.czm&&CZ.w.l!==S.lv)){const c=czp().filter(w=>w.ex&&w.ex.length>=4&&w.ex.includes(w.h));if(c.length<4){$('#rb').innerHTML='<div class="card">ยังไม่มีข้อมูลพอ</div>';return}
   const w=c[Math.floor(Math.random()*c.length)],bad=z=>z.i==w.i||z.h==w.h||w.ex.includes(z.h);let d=shuf(pool().filter(z=>!bad(z)&&z.c==w.c&&z.h.length==w.h.length));if(d.length<3)d=shuf(pool().filter(z=>!bad(z)));
-  CZ={w,o:shuf([w,...d.slice(0,3)]),a:null}}
+  CZ={w,m:S.czm,o:shuf([w,...d.slice(0,3)]),a:null}}
  const {w,o,a}=CZ;
- $('#rb').innerHTML=`<div class="card"><div class="mu">เลือกคำที่เติมช่องว่าง</div><div style="font-size:24px;margin:8px 0">${w.ex.replace(w.h,'＿＿')}</div>`+o.map((z,j)=>`<button class="opt ${a==null?'':z===w?'ok':j==a?'no':''}" ${a==null?'':'disabled'} onclick="cza(${j})">${z.h}</button>`).join('')+(a==null?'':`<p>${w.ex} <button onclick="say('${w.ex}')">🔊</button><br><span class="py">${w.p}</span> ${w.m||''}</p><button class="on" onclick="CZ=null;vcz()">ข้อต่อไป</button>`)+`</div>`}
+ $('#rb').innerHTML=`<div class="row"><button class="${!S.czm?'on':''}" onclick="S.czm=0;save();vcz()">เฉพาะ HSK ${S.lv}</button><button class="${S.czm?'on':''}" onclick="S.czm=1;save();vcz()">ผสมระดับ 1–${S.lv}</button></div><div class="card"><div class="mu">เลือกคำที่เติมช่องว่าง</div><div style="font-size:24px;margin:8px 0">${w.ex.replace(w.h,'＿＿')}</div>`+o.map((z,j)=>`<button class="opt ${a==null?'':z===w?'ok':j==a?'no':''}" ${a==null?'':'disabled'} onclick="cza(${j})">${z.h}</button>`).join('')+(a==null?'':`<p>${w.ex} <button onclick="say('${w.ex}')">🔊</button><br><span class="py">${w.p}</span> ${w.m||''}</p><button class="on" onclick="CZ=null;vcz()">ข้อต่อไป</button>`)+`</div>`}
 function cza(j){CZ.a=j;rec(CZ.w,CZ.o[j]===CZ.w,5);vcz()}
 function vps(){
- const L=PA.filter(p=>p[0]<=S.lv);
- if(!PS||PS.lv!==S.lv)PS={lv:S.lv,n:Math.floor(Math.random()*L.length),a:{}};
+ const L=psl();
+ if(!PS||PS.lv!==S.lv||PS.m!==S.psm)PS={lv:S.lv,m:S.psm,n:Math.floor(Math.random()*L.length),a:{}};
  const p=L[PS.n%L.length],done=p[3].every((_,k)=>PS.a[k]!=null);
- $('#rb').innerHTML=`<div class="card"><div class="mu">HSK ${p[0]} · บทอ่านที่ ${PS.n%L.length+1}/${L.length}</div><div style="font-size:21px;line-height:2">${p[1]} <button onclick="say('${p[1]}')">🔊</button></div></div>`+p[3].map((q,k)=>`<div class="card"><b>${q[0]}</b>`+q[1].map((o,j)=>`<button class="opt ${PS.a[k]==null?'':j==q[2]?'ok':j==PS.a[k]?'no':''}" ${PS.a[k]==null?'':'disabled'} onclick="psa(${k},${j})">${o}</button>`).join('')+`</div>`).join('')+(done?`<div class="card">แปล: ${p[2]}<br><br><button class="on" onclick="PS.n++;PS.a={};vps()">บทต่อไป</button></div>`:'')}
-function psa(k,j){const L=PA.filter(p=>p[0]<=S.lv),p=L[PS.n%L.length];PS.a[k]=j;const ok=j==p[3][k][2],y=S.ty[6]||[0,0];S.ty[6]=[y[0]+ok,y[1]+1];save();vps()}
+ const hasE=PA.some(q=>q[0]===S.lv),ps=`<div class="row"><button class="${!S.psm&&hasE?'on':''}" onclick="S.psm=0;save();vps()">เฉพาะ HSK ${S.lv}</button><button class="${S.psm||!hasE?'on':''}" onclick="S.psm=1;save();vps()">ผสมระดับ 1–${S.lv}</button></div>${hasE?'':'<div class="mu">HSK '+S.lv+' ยังไม่มีบทอ่านสั้น จึงแสดงระดับที่ต่ำกว่า</div>'}`;
+ $('#rb').innerHTML=ps+`<div class="card"><div class="mu">HSK ${p[0]} · บทอ่านที่ ${PS.n%L.length+1}/${L.length}</div><div style="font-size:21px;line-height:2">${p[1]} <button onclick="say('${p[1]}')">🔊</button></div></div>`+p[3].map((q,k)=>`<div class="card"><b>${q[0]}</b>`+q[1].map((o,j)=>`<button class="opt ${PS.a[k]==null?'':j==q[2]?'ok':j==PS.a[k]?'no':''}" ${PS.a[k]==null?'':'disabled'} onclick="psa(${k},${j})">${o}</button>`).join('')+`</div>`).join('')+(done?`<div class="card">แปล: ${p[2]}<br><br><button class="on" onclick="PS.n++;PS.a={};vps()">บทต่อไป</button></div>`:'')}
+function psl(){const e=PA.filter(p=>p[0]===S.lv),m=PA.filter(p=>p[0]<=S.lv);return S.psm||!e.length?m:e}
+function psa(k,j){const L=psl(),p=L[PS.n%L.length];PS.a[k]=j;const ok=j==p[3][k][2],y=S.ty[6]||[0,0];S.ty[6]=[y[0]+ok,y[1]+1];save();vps()}
 
 /* ---- flashcards ---- */
 let FC=null;
